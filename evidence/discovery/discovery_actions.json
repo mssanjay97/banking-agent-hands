@@ -1,0 +1,35 @@
+{
+  "start_url": "http://127.0.0.1:3000/members",
+  "actions": [
+    {
+      "action": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Member ID",
+        "id": "member-id",
+        "selector": "input#member-id"
+      },
+      "value": "{{member_id}}"
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "button",
+        "name": "Search",
+        "id": null,
+        "selector": "button[type=\"submit\"]"
+      },
+      "value": ""
+    },
+    {
+      "action": "extract",
+      "target": {
+        "role": "savings-balance",
+        "name": "savings-balance",
+        "id": "savings-balance",
+        "selector": "[data-field='savings-balance']"
+      },
+      "value": "$12,840.50"
+    }
+  ]
+}

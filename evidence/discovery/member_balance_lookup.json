@@ -1,0 +1,62 @@
+{
+  "id": "member_balance_lookup",
+  "version": "1.0.0",
+  "target": {
+    "app": "demo-core-banking",
+    "base_url": "http://127.0.0.1:3000"
+  },
+  "inputs": {
+    "member_id": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "steps": [
+    {
+      "action": "navigate",
+      "target": "/members",
+      "value": null,
+      "output": null
+    },
+    {
+      "action": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Member ID"
+      },
+      "value": "{{member_id}}",
+      "output": null
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "button",
+        "name": "Search"
+      },
+      "value": null,
+      "output": null
+    },
+    {
+      "action": "extract",
+      "target": {
+        "selector": "[data-field='savings-balance']"
+      },
+      "value": null,
+      "output": "savings_balance"
+    }
+  ],
+  "outputs": {
+    "savings_balance": {
+      "type": "currency"
+    }
+  },
+  "checkpoint": {
+    "type": "element_visible",
+    "target": {
+      "role": "heading",
+      "name": "Member Details",
+      "id": null,
+      "selector": null
+    }
+  }
+}
