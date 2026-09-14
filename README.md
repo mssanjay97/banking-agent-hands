@@ -130,6 +130,8 @@ Start it with:
 python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
 ~~~
 
+Keep this terminal running while executing the agent, discovery, replay, and handoff demos.
+
 The application will be available at:
 
 ~~~text
@@ -162,13 +164,27 @@ Find member 12345 and retrieve their savings balance.
 
 The agent observes the browser, chooses one action at a time, executes it, observes the updated state, and continues until the requested information is available.
 
+Run the agent:
+
+```powershell
+python -m app.agent.loop
+
+
+This opens a visible Chromium browser and runs the LLM-driven discovery loop against the local banking application.
+
+The agent will:
+
+Observe the current page.
+Ask the LLM for the next action.
+Execute the action in the browser.
+Re-observe the updated page.
+Continue until the requested value is extracted.
+
 The successful workflow is recorded and converted into a reusable artifact.
 
-Generated discovery artifacts are saved under:
+The successful discovery workflow is saved to:
 
-~~~text
-evidence/discovery/
-~~~
+evidence/discovery/discovery_actions.json
 
 The artifact contains:
 
@@ -315,6 +331,16 @@ evidence/handoff/
 
 Human actions are recorded separately from automated actions.
 
+### Completing a human handoff
+
+When the agent pauses for human intervention:
+
+1. Perform the requested action manually in the open browser session.
+2. From a second terminal, run:
+
+```powershell
+python -m app.handoff.complete
+
 ## Safety
 
 The safety layer provides configurable controls for:
@@ -453,3 +479,59 @@ deterministic execution
 ~~~
 
 This separates the expensive and non-deterministic reasoning phase from repeatable execution.
+
+
+## End-to-end demo order
+
+Run the complete flow in this order:
+
+**Terminal 1 — start the banking app**
+```powershell
+python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
+
+Terminal 2 — run the LLM-driven agent
+
+python -m app.agent.loop
+
+This performs the live discovery run and produces the reusable capability artifact under evidence/discovery/.
+
+Terminal 2 — run deterministic replay
+
+python -m app.replay.engine
+
+Replay executes the saved artifact without LLM decision-making and returns the declared output.
+
+Optional — complete a human handoff
+
+If the agent pauses for intervention, perform the required action in the open browser and run from another terminal:
+
+python -m app.handoff.complete
+
+The waiting automation then resumes using the same browser session.
+
+Evidence from the runs is stored under:
+
+evidence/
+├── discovery/
+├── replay/
+├── failures/
+└── handoff/
+
+
+
+So the important reviewer-facing commands become:
+
+# Start app
+python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
+
+# Run agent / discovery
+python -m app.agent.loop
+
+# Replay artifact
+python -m app.replay.engine
+
+# Complete human handoff when needed
+python -m app.handoff.complete
+
+# Verify tests
+pytest -q
