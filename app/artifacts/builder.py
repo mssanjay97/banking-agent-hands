@@ -17,7 +17,7 @@ DISCOVERY_FILE = Path(
 )
 
 OUTPUT_FILE = Path(
-    "evidence/discovery/member_balance_lookup_generated.json"
+    "evidence/discovery/member_balance_lookup.json"
 )
 
 

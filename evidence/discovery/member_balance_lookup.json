@@ -1,9 +1,12 @@
 {
-  "id": "member_balance_lookup",
-  "version": "1.0.0",
-  "target": {
-    "app": "demo-core-banking",
-    "base_url": "http://127.0.0.1:3000"
+  "id": "member-balance-lookup",
+  "version": "1.0",
+  "surface": {
+    "type": "web",
+    "vendor": "demo-core-banking",
+    "tenant": "demo",
+    "base_url": "http://127.0.0.1:3000",
+    "version": "1.0"
   },
   "inputs": {
     "member_id": {
@@ -14,7 +17,7 @@
   "steps": [
     {
       "action": "navigate",
-      "target": "/members",
+      "target": "http://127.0.0.1:3000/members",
       "value": null,
       "output": null
     },
@@ -22,7 +25,9 @@
       "action": "fill",
       "target": {
         "role": "textbox",
-        "name": "Member ID"
+        "name": "Member ID",
+        "id": "member-id",
+        "selector": "input#member-id"
       },
       "value": "{{member_id}}",
       "output": null
@@ -31,32 +36,43 @@
       "action": "click",
       "target": {
         "role": "button",
-        "name": "Search"
+        "name": "Search",
+        "id": null,
+        "selector": "button[type=\"submit\"]"
       },
-      "value": null,
+      "value": "",
       "output": null
     },
     {
       "action": "extract",
       "target": {
+        "role": "savings-balance",
+        "name": "savings-balance",
+        "id": "savings-balance",
         "selector": "[data-field='savings-balance']"
       },
-      "value": null,
+      "value": "$12,840.50",
       "output": "savings_balance"
     }
   ],
   "outputs": {
     "savings_balance": {
-      "type": "currency"
+      "type": "string"
     }
   },
   "checkpoint": {
-    "type": "element_visible",
+    "type": "element_present",
     "target": {
-      "role": "heading",
-      "name": "Member Details",
+      "role": null,
+      "name": null,
       "id": null,
-      "selector": null
+      "selector": "[data-field='savings-balance']"
     }
-  }
+  },
+  "business_outcomes": [
+    {
+      "signal": "Member not found.",
+      "status": "MEMBER_NOT_FOUND"
+    }
+  ]
 }

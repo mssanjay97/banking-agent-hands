@@ -17,7 +17,7 @@ from app.replay.logging import log_event
 
 
 ARTIFACT_PATH = Path(
-    "evidence/discovery/member_balance_lookup_generated.json"
+    "evidence/discovery/member_balance_lookup.json"
 )
 
 

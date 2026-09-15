@@ -8,6 +8,7 @@ from app.agent.llm import ask_llm
 from app.artifacts.discovery_recorder import DiscoveryRecorder
 from app.handoff.controller import wait_for_human
 
+from app.artifacts.builder import build_artifact
 
 START_URL = "http://127.0.0.1:3000/members"
 
@@ -83,6 +84,11 @@ async def run_agent(
 
                 print("DISCOVERY ACTIONS SAVED:")
                 print(discovery_path)
+
+                artifact_path = build_artifact()
+
+                print("CAPABILITY ARTIFACT SAVED:")
+                print(artifact_path)
 
                 break
 
