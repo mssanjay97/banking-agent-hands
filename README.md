@@ -520,12 +520,15 @@ The waiting automation then resumes using the same browser session.
 
 Evidence from the runs is stored under:
 
+~~~text
+
 evidence/
 ├── discovery/
 ├── replay/
 ├── failures/
 └── handoff/
 
+~~~
 
 So the important reviewer-facing commands become:
 
