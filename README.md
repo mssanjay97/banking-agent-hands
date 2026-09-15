@@ -166,9 +166,9 @@ The agent observes the browser, chooses one action at a time, executes it, obser
 
 Run the agent:
 
-```powershell
+~~~powershell
 python -m app.agent.loop
-
+~~~
 
 This opens a visible Chromium browser and runs the LLM-driven discovery loop against the local banking application.
 
@@ -338,9 +338,9 @@ When the agent pauses for human intervention:
 1. Perform the requested action manually in the open browser session.
 2. From a second terminal, run:
 
-```powershell
+~~~powershell
 python -m app.handoff.complete
-
+~~~
 ## Safety
 
 The safety layer provides configurable controls for:
@@ -486,18 +486,22 @@ This separates the expensive and non-deterministic reasoning phase from repeatab
 Run the complete flow in this order:
 
 **Terminal 1 — start the banking app**
-```powershell
+
+~~~powershell
 python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
 
 Terminal 2 — run the LLM-driven agent
 
 python -m app.agent.loop
 
+~~~
 This performs the live discovery run and produces the reusable capability artifact under evidence/discovery/.
 
 Terminal 2 — run deterministic replay
 
+~~~powershell
 python -m app.replay.engine
+~~~
 
 Replay executes the saved artifact without LLM decision-making and returns the declared output.
 
@@ -505,7 +509,9 @@ Optional — complete a human handoff
 
 If the agent pauses for intervention, perform the required action in the open browser and run from another terminal:
 
+~~~powershell
 python -m app.handoff.complete
+~~~
 
 The waiting automation then resumes using the same browser session.
 
@@ -518,8 +524,9 @@ evidence/
 └── handoff/
 
 
-
 So the important reviewer-facing commands become:
+
+~~~powershell
 
 # Start app
 python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
@@ -535,3 +542,5 @@ python -m app.handoff.complete
 
 # Verify tests
 pytest -q
+
+~~~
