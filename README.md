@@ -489,12 +489,15 @@ Run the complete flow in this order:
 
 ~~~powershell
 python -m uvicorn app.bank.server:app --host 127.0.0.1 --port 3000
+~~~
+
 
 Terminal 2 — run the LLM-driven agent
 
+~~~powershell
 python -m app.agent.loop
-
 ~~~
+
 This performs the live discovery run and produces the reusable capability artifact under evidence/discovery/.
 
 Terminal 2 — run deterministic replay
