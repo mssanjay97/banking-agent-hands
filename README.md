@@ -71,6 +71,7 @@ The project also demonstrates safety controls, business-outcome handling, failur
                                                         v
                                                  human handoff
 
+```
 
 Components
 app/agent/ — browser observation, UI actions, LLM decisions, and discovery loop
