@@ -93,3 +93,5 @@ async def wait_for_human(
 
     print("\n========== HUMAN HANDOFF COMPLETE ==========")
     print("Resuming automation.")
+
+handoff_to_human = wait_for_human

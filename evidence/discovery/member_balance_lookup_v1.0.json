@@ -1,0 +1,52 @@
+{
+  "capability_id": "member_balance_lookup",
+  "artifact_version": "1.0",
+  "goal": "Find member 12345 and retrieve their savings balance.",
+  "start_url": "http://127.0.0.1:3000/members",
+  "surface": {
+    "type": "web",
+    "vendor": "demo-core-banking",
+    "tenant": "demo",
+    "base_url": "http://127.0.0.1:3000/members",
+    "version": "1.0"
+  },
+  "parameters": [
+    {
+      "name": "member_id",
+      "value": "12345",
+      "type": "string"
+    }
+  ],
+  "actions": [
+    {
+      "action": "fill",
+      "target": {
+        "role": "input",
+        "name": "Member ID",
+        "id": "member-id",
+        "selector": "input#member-id"
+      },
+      "value": "{{member_id}}"
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "button",
+        "name": "Search",
+        "id": null,
+        "selector": "button"
+      },
+      "value": null
+    },
+    {
+      "action": "done",
+      "target": {
+        "role": "text",
+        "name": "Savings Balance",
+        "id": "savings_balance",
+        "selector": "text: Savings Balance\t$12,840.50"
+      },
+      "value": "$12,840.50"
+    }
+  ]
+}

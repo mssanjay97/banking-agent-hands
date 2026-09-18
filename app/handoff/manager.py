@@ -101,3 +101,6 @@ def is_handoff_complete() -> bool:
         request = json.load(file)
 
     return request.get("status") == "HUMAN_COMPLETED"
+
+
+create_intervention_request = create_handoff_request

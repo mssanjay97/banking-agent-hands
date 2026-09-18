@@ -6,17 +6,19 @@ from pathlib import Path
 LOG_FILE = Path("evidence/replay/replay.jsonl")
 
 
-def _redact_action(action: dict) -> dict:
+def _redact_action(
+    action: dict,
+) -> dict:
     """
-    Remove concrete input values before persisting replay logs.
+    Remove concrete runtime input values
+    before persisting replay logs.
     """
     redacted = action.copy()
 
-    if redacted.get("action") == "fill":
+    if "value" in redacted:
         redacted["value"] = "<redacted>"
 
     return redacted
-
 
 def log_event(
     event_type: str,

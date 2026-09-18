@@ -12,17 +12,14 @@ from app.artifacts.schema import (
 from app.artifacts.surface import Surface
 
 
-DISCOVERY_FILE = Path(
-    "evidence/discovery/discovery_actions.json"
-)
-
-OUTPUT_FILE = Path(
-    "evidence/discovery/member_balance_lookup.json"
-)
-
-
-def build_artifact():
-    with DISCOVERY_FILE.open(
+def build_artifact(
+    discovery_file: Path,
+    output_file: Path,
+    capability_id: str,
+    artifact_version: str,
+    surface: Surface,
+):
+    with discovery_file.open(
         "r",
         encoding="utf-8",
     ) as file:
@@ -30,75 +27,97 @@ def build_artifact():
 
     start_url = discovery["start_url"]
     actions = discovery["actions"]
+    goal = discovery.get("goal")
 
     steps = []
 
-    steps.append(
-        ArtifactStep(
-            action="navigate",
-            target=start_url,
-        )
-    )
-
     for action in actions:
-        action_copy = action.copy()
+        action_type = action["action"]
 
-        output = None
-
-        if action_copy["action"] == "extract":
-            output = "savings_balance"
+        value = None
+        if action_type not in {"extract", "click"}:
+            value = action.get("value")
 
         steps.append(
             ArtifactStep(
-                action=action_copy["action"],
-                target=action_copy.get("target", {}),
-                value=action_copy.get("value"),
-                output=output,
+                action=action_type,
+                target=action.get("target", {}),
+                value=value,
+                output=action.get("output"),
             )
         )
 
-    artifact = CapabilityArtifact(
-        id="member-balance-lookup",
-        version="1.0",
-        surface=Surface(
-            type="web",
-            vendor="demo-core-banking",
-            tenant="demo",
-            base_url="http://127.0.0.1:3000",
-            version="1.0",
-        ),
-        inputs={
-            "member_id": ArtifactInput(
-                type="string",
-                required=True,
-            )
-        },
-        steps=steps,
-        outputs={
-            "savings_balance": ArtifactOutput(
+    outputs = {}
+
+    for action in actions:
+        if action.get("action") != "extract":
+            continue
+
+        output_name = action.get("output")
+
+        if output_name:
+            outputs[output_name] = ArtifactOutput(
                 type="string"
             )
-        },
-        checkpoint=Checkpoint(
-            type="element_present",
-            target={
-                "selector": "[data-field='savings-balance']"
-            },
-        ),
-        business_outcomes=[
-            BusinessOutcome(
-                signal="Member not found.",
-                status="MEMBER_NOT_FOUND",
+
+    # Build artifact inputs from LLM-discovered parameters
+    inputs = {}
+
+    for parameter in discovery.get("parameters", []):
+        name = parameter.get("name")
+        parameter_type = parameter.get("type", "string")
+
+        if not name:
+            continue
+
+        inputs[name] = ArtifactInput(
+            type=parameter_type,
+            required=True,
+        )
+
+    checkpoint = None
+
+    # Prefer the completion target recorded by the discovery agent.
+    for action in actions:
+        if action.get("action") == "done" and action.get("target"):
+            checkpoint = Checkpoint(
+                type="element_present",
+                target=action["target"],
             )
-        ],
+            break
+
+    # Fallback if discovery did not record a done target.
+    if checkpoint is None:
+        for action in reversed(actions):
+            action_type = action.get("action")
+            target = action.get("target")
+
+            if action_type in {"extract", "click", "fill"} and target:
+                checkpoint = Checkpoint(
+                    type="element_present",
+                    target=target,
+                )
+                break 
+
+    artifact = CapabilityArtifact(
+        id=capability_id,
+        version=artifact_version,
+        surface=surface,
+        inputs=inputs,
+        steps=steps,
+        outputs=outputs,
+        checkpoint=checkpoint,
+        business_outcomes=[],
+        goal=goal,
+        start_url=start_url,
     )
 
-    OUTPUT_FILE.parent.mkdir(
+    output_file.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    with OUTPUT_FILE.open(
+    with output_file.open(
         "w",
         encoding="utf-8",
     ) as file:
@@ -108,9 +127,4 @@ def build_artifact():
             indent=2,
         )
 
-    return OUTPUT_FILE
-
-
-if __name__ == "__main__":
-    path = build_artifact()
-    print(f"Artifact saved to: {path}")
+    return output_file

@@ -1,0 +1,87 @@
+{
+  "id": "add_checking_account",
+  "version": "1.0",
+  "goal": "Add a checking account with an initial deposit of  for member 54321.",
+  "start_url": "http://127.0.0.1:3000/members",
+  "surface": {
+    "type": "web",
+    "vendor": "demo-core-banking",
+    "tenant": "demo",
+    "base_url": "http://127.0.0.1:3000/members",
+    "version": "1.0"
+  },
+  "inputs": {
+    "member_id": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "steps": [
+    {
+      "action": "fill",
+      "target": {
+        "role": "input",
+        "name": "Member ID",
+        "id": "member-id",
+        "selector": null
+      },
+      "value": "{{member_id}}",
+      "output": null
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "button",
+        "name": "Search",
+        "id": null,
+        "selector": null
+      },
+      "value": null,
+      "output": null
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "link",
+        "name": "Add Account",
+        "id": null,
+        "selector": null
+      },
+      "value": null,
+      "output": null
+    },
+    {
+      "action": "click",
+      "target": {
+        "role": "button",
+        "name": "Create Account",
+        "id": "create-account-button",
+        "selector": "button[accessibility-name='Create Account']"
+      },
+      "value": null,
+      "output": null
+    },
+    {
+      "action": "done",
+      "target": {
+        "role": "status",
+        "name": "Checking account created successfully.",
+        "id": "status-message-12345",
+        "selector": "div[role='status']"
+      },
+      "value": null,
+      "output": null
+    }
+  ],
+  "outputs": {},
+  "checkpoint": {
+    "type": "element_present",
+    "target": {
+      "role": "status",
+      "name": "Checking account created successfully.",
+      "id": "status-message-12345",
+      "selector": "div[role='status']"
+    }
+  },
+  "business_outcomes": []
+}

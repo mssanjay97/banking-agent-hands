@@ -1,22 +1,7 @@
 {
-  "id": "member_balance_lookup",
-  "version": "1.0",
   "goal": "Find member 12345 and retrieve their savings balance.",
   "start_url": "http://127.0.0.1:3000/members",
-  "surface": {
-    "type": "web",
-    "vendor": "demo-core-banking",
-    "tenant": "demo",
-    "base_url": "http://127.0.0.1:3000/members",
-    "version": "1.0"
-  },
-  "inputs": {
-    "member_id": {
-      "type": "string",
-      "required": true
-    }
-  },
-  "steps": [
+  "actions": [
     {
       "action": "fill",
       "target": {
@@ -36,7 +21,7 @@
         "id": null,
         "selector": "button[type=\"submit\"]"
       },
-      "value": null,
+      "value": "Search",
       "output": "Search button clicked"
     },
     {
@@ -47,23 +32,7 @@
         "id": null,
         "selector": "[data-field='savings-balance']"
       },
-      "value": null,
       "output": "extracted_value"
     }
-  ],
-  "outputs": {
-    "extracted_value": {
-      "type": "string"
-    }
-  },
-  "checkpoint": {
-    "type": "element_present",
-    "target": {
-      "role": "paragraph",
-      "name": "Savings Balance",
-      "id": null,
-      "selector": "[data-field='savings-balance']"
-    }
-  },
-  "business_outcomes": []
+  ]
 }

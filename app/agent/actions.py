@@ -1,55 +1,86 @@
 from playwright.async_api import Page
+
 from app.safety.policy import SafetyPolicy
 
-DEFAULT_POLICY = SafetyPolicy(
-    allowed_domains=[
-        "127.0.0.1",
-        "localhost",
-    ],
-    allowed_actions=[
-        "navigate",
-        "fill",
-        "click",
-        "extract",
-    ],
-    risky_actions=[],
-)
 
-async def execute_action(page: Page,action: dict, policy: SafetyPolicy = DEFAULT_POLICY):    
+async def execute_action(
+    page: Page,
+    action: dict,
+    policy: SafetyPolicy,
+):
     """
     Execute one structured browser action.
 
     Supported actions:
-    - navigate
-    - fill
-    - click
-    - extract
-    """    
-    policy.check_action(action)
+        navigate
+        fill
+        clear
+        select
+        check
+        uncheck
+        click
+        extract
 
-    if action["action"] == "navigate":
-        policy.check_url(action["target"])
+    The LLM decides which action to perform.
+    This layer only executes the requested action.
+    """
+
+    policy.check_action(action)
 
     action_type = action["action"]
 
-    if action_type == "navigate":
-        target = action["target"]
+    # ---------------------------------------------------------
+    # NAVIGATE
+    # ---------------------------------------------------------
 
-        await page.goto(target)
+    if action_type == "navigate":
+        url = action.get("value")
+
+        if not isinstance(url, str):
+            raise ValueError(
+                f"Navigate URL must be a string, got: "
+                f"{type(url).__name__}: {url!r}"
+            )
+
+        url = url.strip()
+
+        if not url:
+            raise ValueError(
+                "Navigate action requires a non-empty URL."
+            )
+
+        policy.check_url(url)
+
+        await page.goto(
+            url,
+            wait_until="domcontentloaded",
+        )
 
         return {
             "status": "success",
             "action": "navigate",
-            "target": target,
+            "url": page.url,
         }
+
+    # ---------------------------------------------------------
+    # FILL
+    # ---------------------------------------------------------
 
     if action_type == "fill":
         target = action["target"]
-        value = action["value"]
+        value = action.get("value")
 
-        locator = await find_locator(page, target)
+        if value is None:
+            raise ValueError(
+                "fill action requires a value"
+            )
 
-        await locator.fill(value)
+        locator = await find_locator(
+            page,
+            target,
+        )
+
+        await locator.fill(str(value))
 
         return {
             "status": "success",
@@ -57,10 +88,115 @@ async def execute_action(page: Page,action: dict, policy: SafetyPolicy = DEFAULT
             "target": target,
         }
 
+    # ---------------------------------------------------------
+    # CLEAR
+    # ---------------------------------------------------------
+
+    if action_type == "clear":
+        target = action["target"]
+
+        locator = await find_locator(
+            page,
+            target,
+        )
+
+        await locator.fill("")
+
+        return {
+            "status": "success",
+            "action": "clear",
+            "target": target,
+        }
+
+    # ---------------------------------------------------------
+    # SELECT
+    # ---------------------------------------------------------
+
+    if action_type == "select":
+        target = action["target"]
+        value = action.get("value")
+
+        if value is None:
+            raise ValueError(
+                "select action requires a value"
+            )
+
+        locator = await find_locator(
+            page,
+            target,
+        )
+
+        tag = await locator.evaluate(
+            "(el) => el.tagName.toLowerCase()"
+        )
+
+        if tag != "select":
+            raise ValueError(
+                "select action requires a <select> element"
+            )
+
+        await locator.select_option(
+            str(value)
+        )
+
+        return {
+            "status": "success",
+            "action": "select",
+            "target": target,
+            "value": str(value),
+        }
+
+    # ---------------------------------------------------------
+    # CHECK
+    # ---------------------------------------------------------
+
+    if action_type == "check":
+        target = action["target"]
+
+        locator = await find_locator(
+            page,
+            target,
+        )
+
+        await locator.check()
+
+        return {
+            "status": "success",
+            "action": "check",
+            "target": target,
+        }
+
+    # ---------------------------------------------------------
+    # UNCHECK
+    # ---------------------------------------------------------
+
+    if action_type == "uncheck":
+        target = action["target"]
+
+        locator = await find_locator(
+            page,
+            target,
+        )
+
+        await locator.uncheck()
+
+        return {
+            "status": "success",
+            "action": "uncheck",
+            "target": target,
+        }
+
+    # ---------------------------------------------------------
+    # CLICK
+    # ---------------------------------------------------------
+
     if action_type == "click":
         target = action["target"]
 
-        locator = await find_locator(page, target)
+        locator = await find_locator(
+            page,
+            target,
+        )
 
         await locator.click()
 
@@ -70,10 +206,17 @@ async def execute_action(page: Page,action: dict, policy: SafetyPolicy = DEFAULT
             "target": target,
         }
 
+    # ---------------------------------------------------------
+    # EXTRACT
+    # ---------------------------------------------------------
+
     if action_type == "extract":
         target = action["target"]
 
-        locator = await find_locator(page, target)
+        locator = await find_locator(
+            page,
+            target,
+        )
 
         value = await locator.inner_text()
 
@@ -84,21 +227,40 @@ async def execute_action(page: Page,action: dict, policy: SafetyPolicy = DEFAULT
             "value": value.strip(),
         }
 
-    raise ValueError(f"Unsupported action: {action_type}")
+    raise ValueError(
+        f"Unsupported action: {action_type}"
+    )
 
 
-async def find_locator(page: Page, target: dict):
+async def find_locator(
+    page: Page,
+    target: dict,
+):
     """
-    Resolve an LLM-generated target using multiple locator strategies.
+    Resolve a structured target.
 
-    This makes the agent more tolerant of small differences in
-    how the LLM describes an element.
+    Resolution order:
+        1. Accessible role + name
+        2. HTML id
+        3. CSS selector
+
+    The target is produced from the observed browser
+    surface. No application-specific selectors are
+    generated here.
     """
+
+    if not target:
+        raise ValueError(
+            "Action target is required"
+        )
 
     role = target.get("role")
     name = target.get("name")
 
-    # 1. Preferred: accessible role + name.
+    # ---------------------------------------------------------
+    # 1. Accessible role + accessible name
+    # ---------------------------------------------------------
+
     if role and name:
         locator = page.get_by_role(
             role,
@@ -108,20 +270,30 @@ async def find_locator(page: Page, target: dict):
         if await locator.count() > 0:
             return locator.first
 
-    # 2. If the target contains an HTML id.
+    # ---------------------------------------------------------
+    # 2. HTML id
+    # ---------------------------------------------------------
+
     element_id = target.get("id")
 
     if element_id:
-        locator = page.locator(f"#{element_id}")
+        locator = page.locator(
+            f"#{element_id}"
+        )
 
         if await locator.count() > 0:
             return locator.first
 
-    # 3. If the target contains a CSS selector.
+    # ---------------------------------------------------------
+    # 3. CSS selector
+    # ---------------------------------------------------------
+
     selector = target.get("selector")
 
     if selector:
-        locator = page.locator(selector)
+        locator = page.locator(
+            selector
+        )
 
         if await locator.count() > 0:
             return locator.first

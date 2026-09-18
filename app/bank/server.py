@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Query
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Query, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.bank.data import MEMBERS
 
@@ -127,6 +127,18 @@ def search_member(member_id: str = Query(...)):
         </html>
         """
 
+    accounts_html = ""
+
+    for account_type, balance in member["accounts"].items():
+        accounts_html += f"""
+            <tr>
+                <th scope="row">{account_type.title()} Balance</th>
+                <td class="balance">
+                    ${balance:,.2f}
+                </td>
+            </tr>
+        """
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -170,6 +182,14 @@ def search_member(member_id: str = Query(...)):
             .balance {{
                 font-weight: bold;
             }}
+
+            .actions {{
+                margin-top: 25px;
+            }}
+
+            .actions a {{
+                margin-right: 15px;
+            }}
         </style>
     </head>
 
@@ -189,29 +209,156 @@ def search_member(member_id: str = Query(...)):
                 </tr>
 
                 <tr>
-                    <th scope="row">Account Type</th>
-                    <td>{member["account_type"]}</td>
+                    <th scope="row">Accounts</th>
+                    <td>{", ".join(
+                        account.title()
+                        for account in member["accounts"]
+                    )}</td>
                 </tr>
 
-                <tr>
-                    <th scope="row">Checking Balance</th>
-                    <td class="balance">
-                        ${member["checking_balance"]:,.2f}
-                    </td>
-                </tr>
-
-                <tr>
-                    <th scope="row">Savings Balance</th>
-                    <td class="balance" data-field="savings-balance">
-                        ${member["savings_balance"]:,.2f}
-                    </td>
-                </tr>
+                {accounts_html}
             </table>
 
-            <br>
+            <div class="actions">
+                <a href="/accounts/add?member_id={member_id}">
+                    Add Account
+                </a>
 
-            <a href="/members">Search Another Member</a>
+                <a href="/members">
+                    Search Another Member
+                </a>
+            </div>
         </div>
+    </body>
+    </html>
+    """
+
+
+@app.get("/accounts/add", response_class=HTMLResponse)
+def add_account_page(member_id: str = Query(...)):
+    if member_id not in MEMBERS:
+        return """
+        <h1>Member not found.</h1>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Add Account</title>
+    </head>
+
+    <body>
+        <h1>Add Account</h1>
+
+        <p>Member ID: {member_id}</p>
+
+        <form action="/accounts/add" method="post">
+            <input
+                type="hidden"
+                name="member_id"
+                value="{member_id}"
+            >
+
+            <label for="account-type">
+                Account Type
+            </label>
+
+            <select
+                id="account-type"
+                name="account_type"
+            >
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+            </select>
+
+            <br><br>
+
+            <label for="initial-deposit">
+                Initial Deposit
+            </label>
+
+            <input
+                id="initial-deposit"
+                name="initial_deposit"
+                type="number"
+                step="0.01"
+                value="0"
+            >
+
+            <br><br>
+
+            <button type="submit">
+                Create Account
+            </button>
+        </form>
+
+        <br>
+
+        <a href="/members/search?member_id={member_id}">
+            Cancel
+        </a>
+    </body>
+    </html>
+    """
+
+
+@app.post("/accounts/add", response_class=HTMLResponse)
+def add_account(
+    member_id: str = Form(...),
+    account_type: str = Form(...),
+    initial_deposit: float = Form(...),
+):
+    member = MEMBERS.get(member_id)
+
+    if member is None:
+        return """
+        <div role="alert">
+            Member not found.
+        </div>
+        """
+
+    if account_type in member["accounts"]:
+        return """
+        <div role="alert">
+            Account already exists.
+        </div>
+        """
+
+    if initial_deposit < 0:
+        return """
+        <div role="alert">
+            Initial deposit cannot be negative.
+        </div>
+        """
+
+    member["accounts"][account_type] = initial_deposit
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Account Created</title>
+    </head>
+
+    <body>
+        <h1>Account Created</h1>
+
+        <div role="status">
+            {account_type.title()} account created successfully.
+        </div>
+
+        <p>
+            Member ID: {member_id}
+        </p>
+
+        <p>
+            Initial Deposit: ${initial_deposit:,.2f}
+        </p>
+
+        <a href="/members/search?member_id={member_id}">
+            Return to Member Details
+        </a>
     </body>
     </html>
     """

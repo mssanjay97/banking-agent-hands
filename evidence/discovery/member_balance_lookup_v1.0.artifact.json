@@ -26,7 +26,7 @@
         "selector": "input#member-id"
       },
       "value": "{{member_id}}",
-      "output": "Member ID filled with 12345"
+      "output": null
     },
     {
       "action": "click",
@@ -34,35 +34,31 @@
         "role": "button",
         "name": "Search",
         "id": null,
-        "selector": "button[type=\"submit\"]"
+        "selector": "button"
       },
       "value": null,
-      "output": "Search button clicked"
+      "output": null
     },
     {
-      "action": "extract",
+      "action": "done",
       "target": {
-        "role": "paragraph",
+        "role": "text",
         "name": "Savings Balance",
-        "id": null,
-        "selector": "[data-field='savings-balance']"
+        "id": "savings_balance",
+        "selector": "text: Savings Balance\t$12,840.50"
       },
-      "value": null,
-      "output": "extracted_value"
+      "value": "$12,840.50",
+      "output": null
     }
   ],
-  "outputs": {
-    "extracted_value": {
-      "type": "string"
-    }
-  },
+  "outputs": {},
   "checkpoint": {
     "type": "element_present",
     "target": {
-      "role": "paragraph",
+      "role": "text",
       "name": "Savings Balance",
-      "id": null,
-      "selector": "[data-field='savings-balance']"
+      "id": "savings_balance",
+      "selector": "text: Savings Balance\t$12,840.50"
     }
   },
   "business_outcomes": []

@@ -1,7 +1,6 @@
 from typing import Dict, List, Optional, Any
 
-from pydantic import BaseModel
-
+from pydantic import BaseModel, Field
 from app.artifacts.surface import Surface
 
 
@@ -45,6 +44,9 @@ class BusinessOutcome(BaseModel):
 class CapabilityArtifact(BaseModel):
     id: str
     version: str
+    goal: Optional[str] = None
+    start_url: Optional[str] = None
+
     surface: Surface
 
     inputs: Dict[str, ArtifactInput]
@@ -53,6 +55,8 @@ class CapabilityArtifact(BaseModel):
 
     outputs: Dict[str, ArtifactOutput]
 
-    checkpoint: Checkpoint
+    checkpoint: Optional[Checkpoint] = None
 
-    business_outcomes: List[BusinessOutcome] = []
+    business_outcomes: List[BusinessOutcome] = Field(
+        default_factory=list
+    )
